@@ -15,56 +15,80 @@ void Init_base32_native() {
     rb_define_singleton_method(Base32Native, "decode", method_base32_native_decode, 1);
 }
 
+// Adapted Google implementation from: https://raw.githubusercontent.com/heapsource/google-authenticator/master/libpam/base32.c
+// Original signature: int base32_encode(const uint8_t *data, int length, uint8_t *result, int bufSize)
 VALUE method_base32_native_encode(VALUE self, VALUE data) {
-  printf("Encoding");
-  /*
-   // Google implementation from: https://raw.githubusercontent.com/heapsource/google-authenticator/master/libpam/base32.c
-  int base32_encode(const uint8_t *data, int length, uint8_t *result,
-                    int bufSize) {
-    if (length < 0 || length > (1 << 28)) {
-      return -1;
-    }
-    int count = 0;
-    if (length > 0) {
-      int buffer = data[0];
-      int next = 1;
-      int bitsLeft = 8;
-      while (count < bufSize && (bitsLeft > 0 || next < length)) {
-        if (bitsLeft < 5) {
-          if (next < length) {
-            buffer <<= 8;
-            buffer |= data[next++] & 0xFF;
-            bitsLeft += 8;
-          } else {
-            int pad = 5 - bitsLeft;
-            buffer <<= pad;
-            bitsLeft += pad;
-          }
+  char *plaintext;
+  char *result;
+  int length, count, index, bufSize;
+
+  plaintext = StringValuePtr(data);
+  count = 0;
+  length = sizeof(plaintext);
+  bufSize = ((length + 4)/5)*8 + 1;
+
+  result = malloc(bufSize * 1024);
+  // result = malloc(bufSize);
+
+/*
+144   puts("Testing base32 encoding");
+145   static const uint8_t dat[] = "Hello world...";
+146   uint8_t enc[((sizeof(dat) + 4)/5)*8 + 1];
+147   assert(base32_encode(dat, sizeof(dat), enc, sizeof(enc)) == sizeof(enc)-1);
+148   assert(!strcmp((char *)enc, "JBSWY3DPEB3W64TMMQXC4LQA"));
+*/
+  printf("Encoding: %s\n", plaintext);
+
+  if (length < 0 || length > (1 << 28)) {
+    return -1;
+  }
+
+  if (length > 0) {
+    int buffer = plaintext[0];
+    int next = 1;
+    int bitsLeft = 8;
+    while (count < bufSize && (bitsLeft > 0 || next < length)) {
+      if (bitsLeft < 5) {
+        if (next < length) {
+          buffer <<= 8;
+          buffer |= plaintext[next++] & 0xFF;
+          bitsLeft += 8;
+        } else {
+          int pad = 5 - bitsLeft;
+          buffer <<= pad;
+          bitsLeft += pad;
         }
-        int index = 0x1F & (buffer >> (bitsLeft - 5));
-        bitsLeft -= 5;
-        result[count++] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"[index];
       }
+      index = 0x1F & (buffer >> (bitsLeft - 5));
+      bitsLeft -= 5;
+      result[count++] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"[index];
     }
-    if (count < bufSize) {
-      result[count] = '\000';
-    }
-    return count;
-    */
+  }
+  if (count < bufSize) {
+    result[count] = '\000';
+  }
+  return (VALUE) result;
 }
 
-VALUE method_base32_native_decode(VALUE self, VALUE encoded) {
-  printf("Decoding: %s\n", StringValuePtr(encoded));
-// int base32_decode(const uint8_t *encoded, uint8_t *result, int bufSize) {
-/*
-  uint8_t *result;
-  int bufSize;
+// Adapted Google implementation from: https://raw.githubusercontent.com/heapsource/google-authenticator/master/libpam/base32.c
+// Original signature: int base32_decode(const uint8_t *encoded, uint8_t *result, int bufSize)
+VALUE method_base32_native_decode(VALUE self, VALUE data) {
+  char *encoded;
+  char *result;
+  char *ptr;
 
+  int bufSize = 9999; // ??
   int buffer = 0;
   int bitsLeft = 0;
   int count = 0;
-  for (const uint8_t *ptr = encoded; count < bufSize && *ptr; ++ptr) {
-    uint8_t ch = *ptr;
+
+  encoded = StringValuePtr(data);
+  result = malloc(strlen(encoded) * 4);
+
+  printf("Decoding: %s\n", encoded);
+
+  for (ptr = encoded; count < bufSize && *ptr; ++ptr) {
+    char ch = *ptr;
     if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n' || ch == '-') {
       continue;
     }
@@ -99,7 +123,5 @@ VALUE method_base32_native_decode(VALUE self, VALUE encoded) {
     result[count] = '\000';
   }
 
-  return result;
-  */
-  return 0;
+  return (VALUE) result;
 }
