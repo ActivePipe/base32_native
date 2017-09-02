@@ -18,13 +18,11 @@ void Init_base32_native() {
 VALUE method_base32_native_encode(VALUE self, VALUE data) {
   char *plaintext;
   char *result;
-  int length, count, index, bufSize;
+  int length, index, bufSize, count = 0;
 
-  plaintext = StringValuePtr(data);
-  count = 0;
+  plaintext = StringValuePtr(data); // convert ruby string to char *
   length = strlen(plaintext);
   bufSize = ((length + 4)/5)*8 + 1;
-
   result = malloc(bufSize); // do we need to free() later?
 
   if (length < 0 || length > (1 << 28)) {
@@ -56,7 +54,7 @@ VALUE method_base32_native_encode(VALUE self, VALUE data) {
     result[count] = '\000';
   }
 
-  return rb_str_new2(result);
+  return rb_str_new2(result); // convert char* to VALUE (Ruby String)
 }
 
 // Adapted Google implementation from: https://raw.githubusercontent.com/heapsource/google-authenticator/master/libpam/base32.c
@@ -66,18 +64,11 @@ VALUE method_base32_native_decode(VALUE self, VALUE data) {
   char *result;
   char *ptr;
 
-  int bufSize;
-  int buffer = 0;
-  int bitsLeft = 0;
-  int count = 0;
+  int bufSize, buffer = 0, bitsLeft = 0, count = 0;
 
-  // convert ruby string to char *
-  encoded = StringValuePtr(data);
-
-  // number of characters in the encoded string * bytes, this is will be more than
-  // enough. I'm sure there's a formula to calculate this more accurately...
-  result = malloc(strlen(encoded) * 4); // do we need to free() later?
+  encoded = StringValuePtr(data); // convert ruby string to char *
   bufSize = strlen(encoded);
+  result = malloc(bufSize); // do we need to free() later?
 
   for (ptr = encoded; count < bufSize && *ptr; ++ptr) {
     char ch = *ptr;
@@ -115,5 +106,5 @@ VALUE method_base32_native_decode(VALUE self, VALUE data) {
     result[count] = '\000';
   }
 
-  return rb_str_new2(result);
+  return rb_str_new2(result); // convert char* to VALUE (Ruby String)
 }
