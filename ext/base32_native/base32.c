@@ -8,8 +8,6 @@ VALUE method_base32_native_encode(VALUE self, VALUE data);
 VALUE method_base32_native_decode(VALUE self, VALUE data);
 
 void Init_base32_native() {
-    printf("Initialized!\n");
-
     Base32Native = rb_define_module("Base32Native");
     rb_define_singleton_method(Base32Native, "encode", method_base32_native_encode, 1);
     rb_define_singleton_method(Base32Native, "decode", method_base32_native_decode, 1);
@@ -24,20 +22,10 @@ VALUE method_base32_native_encode(VALUE self, VALUE data) {
 
   plaintext = StringValuePtr(data);
   count = 0;
-  length = sizeof(plaintext);
+  length = strlen(plaintext);
   bufSize = ((length + 4)/5)*8 + 1;
 
-  result = malloc(bufSize * 1024);
-  // result = malloc(bufSize);
-
-/*
-144   puts("Testing base32 encoding");
-145   static const uint8_t dat[] = "Hello world...";
-146   uint8_t enc[((sizeof(dat) + 4)/5)*8 + 1];
-147   assert(base32_encode(dat, sizeof(dat), enc, sizeof(enc)) == sizeof(enc)-1);
-148   assert(!strcmp((char *)enc, "JBSWY3DPEB3W64TMMQXC4LQA"));
-*/
-  printf("Encoding: %s\n", plaintext);
+  result = malloc(bufSize); // do we need to free() later?
 
   if (length < 0 || length > (1 << 28)) {
     return -1;
@@ -67,7 +55,8 @@ VALUE method_base32_native_encode(VALUE self, VALUE data) {
   if (count < bufSize) {
     result[count] = '\000';
   }
-  return (VALUE) result;
+
+  return rb_str_new2(result);
 }
 
 // Adapted Google implementation from: https://raw.githubusercontent.com/heapsource/google-authenticator/master/libpam/base32.c
@@ -77,19 +66,22 @@ VALUE method_base32_native_decode(VALUE self, VALUE data) {
   char *result;
   char *ptr;
 
-  int bufSize = 9999; // ??
+  int bufSize;
   int buffer = 0;
   int bitsLeft = 0;
   int count = 0;
 
+  // convert ruby string to char *
   encoded = StringValuePtr(data);
-  result = malloc(strlen(encoded) * 4);
 
-  printf("Decoding: %s\n", encoded);
+  // number of characters in the encoded string * bytes, this is will be more than
+  // enough. I'm sure there's a formula to calculate this more accurately...
+  result = malloc(strlen(encoded) * 4); // do we need to free() later?
+  bufSize = strlen(encoded);
 
   for (ptr = encoded; count < bufSize && *ptr; ++ptr) {
     char ch = *ptr;
-    if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n' || ch == '-') {
+    if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n' || ch == '-' || ch == '=') {
       continue;
     }
     buffer <<= 5;
@@ -123,5 +115,5 @@ VALUE method_base32_native_decode(VALUE self, VALUE data) {
     result[count] = '\000';
   }
 
-  return (VALUE) result;
+  return rb_str_new2(result);
 }

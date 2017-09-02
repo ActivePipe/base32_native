@@ -6,11 +6,11 @@ RSpec.describe Base32Native do
   end
 
   it "encodes and decodes correctly" do
-    expect(Base32Native.encode('a')).to eq 'ME======'
-    expect(Base32Native.decode('ME======')).to eq 'a'
-
     expect(Base32Native.encode('12345')).to eq 'GEZDGNBV'
-    expect(Base32Native.decode('GEZDGNBVto')).to eq '12345'
+    expect(Base32Native.decode('GEZDGNBV')).to eq '12345'
+
+    expect(Base32Native.encode('a')).to eq 'ME'
+    expect(Base32Native.decode('ME======')).to eq 'a'
 
     expect(Base32Native.encode('abcde')).to eq 'MFRGGZDF'
     expect(Base32Native.decode('MFRGGZDF')).to eq 'abcde'
