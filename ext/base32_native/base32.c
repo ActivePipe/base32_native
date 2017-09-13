@@ -50,11 +50,8 @@ VALUE method_base32_native_encode(VALUE self, VALUE data) {
       result[count++] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"[index];
     }
   }
-  if (count < bufSize) {
-    result[count] = '\000';
-  }
 
-  return rb_str_new2(result); // convert char* to VALUE (Ruby String)
+  return rb_str_new(result, count); // convert char* to VALUE (Ruby String)
 }
 
 // Adapted Google implementation from: https://raw.githubusercontent.com/heapsource/google-authenticator/master/libpam/base32.c
@@ -102,9 +99,6 @@ VALUE method_base32_native_decode(VALUE self, VALUE data) {
       bitsLeft -= 8;
     }
   }
-  if (count < bufSize) {
-    result[count] = '\000';
-  }
 
-  return rb_str_new2(result); // convert char* to VALUE (Ruby String)
+    return rb_str_new(result, count); // convert char* to VALUE (Ruby String)
 }

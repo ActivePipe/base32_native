@@ -36,4 +36,11 @@ RSpec.describe Base32Native do
 
     expect(Base32Native.decode(encoded)).to eq plaintext
   end
+
+  it "encodes and decodes various lengths correctly" do
+    1000.times do |i|
+      value = '9' * (i + 1)
+      expect(Base32Native.decode(Base32Native.encode(value))).to eq value
+    end
+  end
 end
