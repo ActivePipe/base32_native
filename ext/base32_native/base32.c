@@ -16,12 +16,11 @@ void Init_base32_native() {
 // Adapted Google implementation from: https://raw.githubusercontent.com/heapsource/google-authenticator/master/libpam/base32.c
 // Original signature: int base32_encode(const uint8_t *data, int length, uint8_t *result, int bufSize)
 VALUE method_base32_native_encode(VALUE self, VALUE data) {
-  char *plaintext;
-  char *result;
+  char *plaintext, *result;
   int length, index, bufSize, count = 0;
 
   plaintext = StringValuePtr(data); // convert ruby string to char *
-  length = strlen(plaintext);
+  length = RSTRING_LEN(data);
   bufSize = ((length + 4)/5)*8 + 1;
   result = malloc(bufSize); // do we need to free() later?
 
@@ -64,7 +63,7 @@ VALUE method_base32_native_decode(VALUE self, VALUE data) {
   int bufSize, buffer = 0, bitsLeft = 0, count = 0;
 
   encoded = StringValuePtr(data); // convert ruby string to char *
-  bufSize = strlen(encoded);
+  bufSize = RSTRING_LEN(data);
   result = malloc(bufSize); // do we need to free() later?
 
   for (ptr = encoded; count < bufSize && *ptr; ++ptr) {
@@ -100,5 +99,5 @@ VALUE method_base32_native_decode(VALUE self, VALUE data) {
     }
   }
 
-    return rb_str_new(result, count); // convert char* to VALUE (Ruby String)
+  return rb_str_new(result, count); // convert char* to VALUE (Ruby String)
 }
